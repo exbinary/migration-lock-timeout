@@ -72,7 +72,8 @@ set a timeout for a particular migration.
 
 ## disable_ddl_transaction!
 
-If you use `disable_ddl_transaction!`, no lock timeout will occur
+If you use `disable_ddl_transaction!`, we can't `SET LOCAL ...` since that
+only works within a transaction.
 ```ruby
   class AddMonkey < ActiveRecord::Migration
 
@@ -85,6 +86,16 @@ If you use `disable_ddl_transaction!`, no lock timeout will occur
     end
   end
 ```
+Instead, we resort to setting the lock timeout on the session itself, taking
+care to return it to its original value once the migration completes (or fails)
+```
+-- execute("SET lock_timeout = '1s'")
+-- create_table(:monkey)
+-- execute("SET lock_timeout = '0'")
+```
+Under typical circumstances, this is safe because migrations are run in a
+separate process and a connection wouldn't be concurrently accessed until the
+migration releases it (even when acquired from a connection pool).
 
 ## Running the specs
 
