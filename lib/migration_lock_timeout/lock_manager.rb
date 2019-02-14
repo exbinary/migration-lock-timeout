@@ -1,7 +1,7 @@
 module MigrationLockTimeout
   module LockManager
 
-    def migrate(direction)
+    def exec_migration(conn, direction)
       timeout_disabled = self.class.disable_lock_timeout
       time = self.class.lock_timeout_override ||
         MigrationLockTimeout.try(:config).try(:default_timeout)
